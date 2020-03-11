@@ -3,6 +3,10 @@ package com.fasterxml.jackson.module.kotlin.test
 import com.fasterxml.jackson.annotation.JsonIdentityInfo
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.ObjectIdGenerators
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.SingletonSupport
+import com.fasterxml.jackson.module.kotlin.SingletonSupport.CANONICALIZE
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonTypeRef
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -21,6 +25,9 @@ data class NumberValue(val value: Int) {
 }
 
 class TestGithubX {
+    private val mapper: ObjectMapper = ObjectMapper()
+        .registerModule(KotlinModule(singletonSupport = CANONICALIZE))
+
     private val json = """
         [ {
           "value" : 10,
@@ -38,7 +45,7 @@ class TestGithubX {
     fun `test writing involving type, id and object`() {
         val input = listOf(NumberValue(10), NumberValue(11))
 
-        val output = jacksonObjectMapper()
+        val output = mapper
             .writerFor(jacksonTypeRef<List<NumberValue>>())
             .withDefaultPrettyPrinter()
             .writeValueAsString(input)
@@ -48,7 +55,7 @@ class TestGithubX {
 
     @Test
     fun `test reading involving type, id and object`() {
-        val output = jacksonObjectMapper().readValue<List<NumberValue>>(json)
+        val output = mapper.readValue<List<NumberValue>>(json)
 
         assertEquals(2, output.size)
         val (a, b) = output
